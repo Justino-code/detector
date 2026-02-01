@@ -2,8 +2,9 @@
 import { useCallback } from 'react';
 import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import DetectionService, { CompleteAnalysis } from '../services/DetectionService';
+import { CompleteAnalysis } from '../services/DetectionService';
 import { saveToHistory, HistoryItem } from '../services/historyStorageService';
+import { useDetection } from './useDetection';
 import { 
   takePhoto as takePhotoUtil, 
   pickImageFromGallery, 
@@ -23,9 +24,14 @@ export const useDetectionHandlers = ({
   updateState,
   navigation,
 }: UseDetectionHandlersProps) => {
+  // ✅ Hook detect encapsula pré-processamento + detecção
+  const { detect, loading } = useDetection();
+
+  // Tirar foto
   const handleTakePhoto = useCallback(async () => {
     try {
       updateState({ locationLoading: true });
+
       const currentLocation = await requestLocationPermission();
       updateState({ location: currentLocation, locationLoading: false });
 
@@ -52,8 +58,9 @@ export const useDetectionHandlers = ({
       console.error('Erro ao tirar foto:', err);
       updateState({ locationLoading: false });
     }
-  }, [updateState]);
+  }, [updateState, handleAnalyzeImage]);
 
+  // Selecionar imagem da galeria
   const handlePickImage = useCallback(async () => {
     try {
       const imageUri = await pickImageFromGallery();
@@ -69,6 +76,7 @@ export const useDetectionHandlers = ({
     }
   }, [updateState]);
 
+  // Analisar imagem usando detect()
   const handleAnalyzeImage = useCallback(async (imageUri?: string, currentLocation?: any) => {
     const targetImage = imageUri || image;
     const targetLocation = currentLocation || location;
@@ -81,7 +89,8 @@ export const useDetectionHandlers = ({
     updateState({ loading: true, error: null });
 
     try {
-      const completeAnalysis = await DetectionService.completeAnalysis(targetImage);
+      // ✅ pré-processamento + detecção
+      const completeAnalysis: CompleteAnalysis = await detect(targetImage);
 
       const historyItem: Omit<HistoryItem, 'id'> = {
         timestamp: new Date().toISOString(),
@@ -95,41 +104,35 @@ export const useDetectionHandlers = ({
       };
 
       const savedId = await saveToHistory(historyItem);
-      
+
       const enrichedAnalysis = {
         ...completeAnalysis,
         id: savedId,
         location: historyItem.location,
       };
 
-      updateState({ 
-        analysis: enrichedAnalysis,
-        loading: false 
-      });
+      updateState({ analysis: enrichedAnalysis, loading: false });
 
       await AsyncStorage.setItem('last_analysis', JSON.stringify(enrichedAnalysis));
-      
     } catch (err: any) {
       console.error('Erro na análise:', err);
-      updateState({ 
-        error: err.message || 'Erro na análise da imagem',
-        loading: false 
-      });
+      updateState({ error: err.message || 'Erro na análise da imagem', loading: false });
       Alert.alert('Erro', 'Não foi possível analisar a imagem. Tente novamente.');
     }
-  }, [image, location, updateState]);
+  }, [image, location, updateState, detect]);
 
+  // Salvar nos favoritos
   const handleSaveToFavorites = useCallback(async (analysis: CompleteAnalysis) => {
     try {
       const favorites = await AsyncStorage.getItem('favorite_analyses');
-      let favoritesArray = favorites ? JSON.parse(favorites) : [];
-      
+      const favoritesArray = favorites ? JSON.parse(favorites) : [];
+
       favoritesArray.unshift({
         ...analysis,
         savedAt: new Date().toISOString(),
         id: `fav_${Date.now()}`,
       });
-      
+
       await AsyncStorage.setItem('favorite_analyses', JSON.stringify(favoritesArray));
       Alert.alert('✅ Salvo!', 'Análise adicionada aos favoritos.');
     } catch (error) {
@@ -138,6 +141,7 @@ export const useDetectionHandlers = ({
     }
   }, []);
 
+  // Compartilhar resultados
   const handleShareResults = useCallback((analysis: CompleteAnalysis) => {
     Alert.alert(
       'Compartilhar Resultados',
@@ -151,25 +155,25 @@ export const useDetectionHandlers = ({
     );
   }, []);
 
+  // Resetar análise
   const handleResetAnalysis = useCallback((resetFn: () => void) => {
     Alert.alert(
       'Nova Análise',
       'Deseja começar uma nova análise?',
       [
         { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Sim', 
-          onPress: resetFn
-        }
+        { text: 'Sim', onPress: resetFn }
       ]
     );
   }, []);
 
-  const handleOpenImageModal = useCallback((imageUri: string, updateState: (updates: any) => void) => {
+  // Abrir modal de imagem
+  const handleOpenImageModal = useCallback((imageUri: string) => {
     updateState({ imageModalVisible: true });
-  }, []);
+  }, [updateState]);
 
   return {
+    loading, // ✅ estado do hook detect
     handleTakePhoto,
     handlePickImage,
     handleAnalyzeImage,

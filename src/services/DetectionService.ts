@@ -1,7 +1,7 @@
 // src/services/DetectionService.ts
 import PlantNetService, { PlantInfo } from './PlantNetService';
 import PlantNetDiseaseService, { PlantDiseaseInfo } from './PlantNetDiseasesService';
-import { PreprocessImage } from '../utils/preprocessImage';
+import { PreprocessImage, PreprocessResult } from '../utils/preprocessImage';
 
 // Tipos exportados (mantidos para compatibilidade)
 export interface DiseaseInfo {
@@ -72,8 +72,8 @@ export interface CompleteAnalysis {
 
 class DetectionService {
   // Pré-processar imagem
-  static async preprocessImage(imageUri: string): Promise<string> {
-    return PreprocessImage.preprocess(imageUri);
+  static async preprocessImage(imageUri: string): Promise<PreprocessResult> {
+    return await PreprocessImage.preprocess(imageUri);
   }
 
   // Orquestrar análise completa usando APENAS PlantNet
