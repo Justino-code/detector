@@ -1,7 +1,7 @@
 // src/services/DetectionService.ts
-import * as ImageManipulator from 'expo-image-manipulator';
 import PlantNetService, { PlantInfo } from './PlantNetService';
 import PlantNetDiseaseService, { PlantDiseaseInfo } from './PlantNetDiseasesService';
+import { PreprocessImage } from '../utils/preprocessImage';
 
 // Tipos exportados (mantidos para compatibilidade)
 export interface DiseaseInfo {
@@ -73,22 +73,7 @@ export interface CompleteAnalysis {
 class DetectionService {
   // Pré-processar imagem
   static async preprocessImage(imageUri: string): Promise<string> {
-    try {
-      const manipulatedImage = await ImageManipulator.manipulateAsync(
-        imageUri,
-        [{ resize: { width: 800 } }],
-        {
-          compress: 0.7,
-          format: ImageManipulator.SaveFormat.JPEG,
-          base64: true,
-        }
-      );
-
-      return `data:image/jpeg;base64,${manipulatedImage.base64}`;
-    } catch (error) {
-      console.error('Erro no pré-processamento:', error);
-      throw error;
-    }
+    return PreprocessImage.preprocess(imageUri);
   }
 
   // Orquestrar análise completa usando APENAS PlantNet
