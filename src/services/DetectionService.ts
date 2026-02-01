@@ -72,8 +72,12 @@ export interface CompleteAnalysis {
 
 class DetectionService {
   // Pré-processar imagem
-  static async preprocessImage(imageUri: string): Promise<PreprocessResult> {
-    return await PreprocessImage.preprocess(imageUri);
+  public static withPreprocess: boolean = true;
+  public static withSimulate: boolean = false;
+
+  static async preprocessImage(imageUri: string): Promise<string> {
+    const preprocess = PreprocessImage.preprocess(imageUri);
+    return (await preprocess).base64Image;
   }
 
   // Orquestrar análise completa usando APENAS PlantNet
@@ -118,9 +122,19 @@ class DetectionService {
     } catch (error: any) {
       console.error('❌ Erro na análise orquestrada:', error);
       
-      // Fallback: análise simulada
-      console.log('🔄 Usando fallback...');
-      return await this.simulateCompleteAnalysis(imageUri, location);
+      // Verificar se deve usar análise simulada
+      if (this.withSimulate) {
+        console.log('🔄 Usando fallback com análise simulada...');
+        return await this.simulateCompleteAnalysis(imageUri, location);
+      } else {
+        // Se withSimulate for false, lançar erro para o usuário
+        console.log('⛔ Análise simulada desativada, mostrando erro ao usuário');
+        throw new Error(
+          'Não foi possível analisar a imagem. ' +
+          'Verifique sua conexão com a internet e tente novamente. ' +
+          'Caso o problema persista, entre em contato com o suporte.'
+        );
+      }
     }
   }
 
@@ -374,19 +388,35 @@ class DetectionService {
       };
     } catch (error) {
       console.error('Erro na análise rápida:', error);
-      return {
-        name: 'Planta não identificada',
-        confidence: 0,
-        commonNames: []
-      };
+      
+      // Verificar se deve retornar resultado simulado ou erro
+      if (this.withSimulate) {
+        return {
+          name: 'Tomateiro (Exemplo)',
+          confidence: 75,
+          scientificName: 'Solanum lycopersicum',
+          description: 'Planta exemplo para demonstração',
+          commonNames: ['Tomate', 'Tomateiro']
+        };
+      } else {
+        throw new Error(
+          'Não foi possível identificar a planta. ' +
+          'Verifique sua conexão com a internet e tente novamente.'
+        );
+      }
     }
   }
 
-  // Fallback: análise simulada completa
+  // Fallback: análise simulada completa (só executa se withSimulate for true)
   private static async simulateCompleteAnalysis(
     imageUri: string, 
     location?: any
   ): Promise<CompleteAnalysis> {
+    // Verificar se a simulação está habilitada
+    if (!this.withSimulate) {
+      throw new Error('Análise simulada está desativada');
+    }
+
     console.log('🔄 Executando análise simulada...');
 
     // Simular atraso de processamento
@@ -453,6 +483,12 @@ class DetectionService {
       } : undefined,
       imageUri
     };
+  }
+
+  // Método para configurar se usa simulação ou não
+  static setSimulationMode(enabled: boolean): void {
+    this.withSimulate = enabled;
+    console.log(`Modo de simulação ${enabled ? 'ativado' : 'desativado'}`);
   }
 }
 

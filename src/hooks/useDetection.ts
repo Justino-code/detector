@@ -9,8 +9,12 @@ export function useDetection() {
   const detect = async (imageUri: string) => {
     setLoading(true);
     try {
-      const processed = await PreprocessImage.preprocess(imageUri);
-      return await DetectionService.completeAnalysis(processed.base64Image);
+      if(DetectionService.withPreprocess){
+        const processed = await DetectionService.preprocessImage(imageUri);
+        return await DetectionService.completeAnalysis(processed);
+      }else{
+        return await DetectionService.completeAnalysis(imageUri);
+      }
     } finally {
       setLoading(false);
     }
