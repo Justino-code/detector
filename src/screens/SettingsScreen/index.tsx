@@ -20,7 +20,9 @@ import  DetectionService  from '../../services/DetectionService';
 
 import { clearHistory } from '../../services/historyStorageService';
 
-const APP_VERSION = '1.0.0';
+import { APP_INFO } from '../../config/env';
+
+const APP_VERSION = APP_INFO.APP_VERSION;
 
 const SettingsScreen = () => {
   const { themeMode, toggleTheme, currentTheme } = useTheme();

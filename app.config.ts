@@ -5,7 +5,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'PlantaVigia',
   slug: 'detector-app',
-  version: '1.0.0',
+  version: '0.0.1',
   orientation: 'portrait',
   icon: './assets/logo.png',
   userInterfaceStyle: 'automatic',
@@ -40,6 +40,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     EXPO_PUBLIC_PLANTNET_API_KEY: process.env.EXPO_PUBLIC_PLANTNET_API_KEY,
     EXPO_PUBLIC_KINDUISE_API_URL: process.env.EXPO_PUBLIC_KINDUISE_API_URL,
     EXPO_PUBLIC_KINDUISE_API_KEY: process.env.EXPO_PUBLIC_KINDUISE_API_KEY,
+    EXPO_PUBLIC_APP_NAME: process.env.EXPO_PUBLIC_APP_NAME,
+    EXPO_PUBLIC_APP_VERSION: process.env.EXPO_PUBLIC_APP_VERSION,
 
     eas: {
         projectId: '6a655d67-54fb-4732-b2b5-d9eebaf2f1db'

@@ -1,4 +1,4 @@
-import { MMKVStorage } from './MMKVStorage';
+import { MMKVStorage } from './MmkvStorage';
 import { AsyncStorageAdapter } from './AsyncStorageAdapter';
 
 // escolha centralizada

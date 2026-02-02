@@ -16,3 +16,8 @@ export const ENV = {
   KINDUISE_API_URL: extra.EXPO_PUBLIC_KINDUISE_API_URL as string,
   KINDUISE_API_KEY: extra.EXPO_PUBLIC_KINDUISE_API_KEY as string,
 };
+
+export const APP_INFO = {
+  APP_NAME: extra.EXPO_PUBLIC_APP_NAME as string,
+  APP_VERSION: extra.EXPO_PUBLIC_APP_VERSION
+}

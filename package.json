@@ -1,6 +1,6 @@
 {
   "name": "detector-app",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
@@ -31,7 +31,6 @@
     "lottie-react-native": "~7.3.1",
     "react": "19.1.0",
     "react-native": "0.81.5",
-    "react-native-mmkv": "^4.1.2",
     "react-native-paper": "^5.14.5",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
