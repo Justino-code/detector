@@ -1,6 +1,6 @@
 // src/services/historyStorageService.ts
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { CompleteAnalysis } from './DetectionService';
+import { storage } from './storage';
+import { CompleteAnalysis } from '../types/analysis';
 
 export interface HistoryItem {
   id: string;
@@ -29,7 +29,7 @@ export const saveToHistory = async (item: Omit<HistoryItem, 'id'>): Promise<stri
     };
     
     const updatedHistory = [newItem, ...history];
-    await AsyncStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(updatedHistory));
+    await storage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(updatedHistory));
     
     return id;
   } catch (error) {
@@ -69,7 +69,7 @@ export const saveCompleteAnalysis = async (
 // Obter todo o histórico
 export const getHistory = async (): Promise<HistoryItem[]> => {
   try {
-    const historyJson = await AsyncStorage.getItem(HISTORY_STORAGE_KEY);
+    const historyJson = await storage.getItem(HISTORY_STORAGE_KEY);
     return historyJson ? JSON.parse(historyJson) : [];
   } catch (error) {
     console.error('Erro ao obter histórico:', error);
@@ -111,7 +111,7 @@ export const deleteFromHistory = async (id: string): Promise<boolean> => {
   try {
     const history = await getHistory();
     const filteredHistory = history.filter(item => item.id !== id);
-    await AsyncStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(filteredHistory));
+    await storage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(filteredHistory));
     
     // Também remover dos favoritos se estiver lá
     await removeFromFavorites(id);
@@ -126,8 +126,8 @@ export const deleteFromHistory = async (id: string): Promise<boolean> => {
 // Limpar todo o histórico
 export const clearHistory = async (): Promise<void> => {
   try {
-    await AsyncStorage.removeItem(HISTORY_STORAGE_KEY);
-    await AsyncStorage.removeItem(FAVORITES_STORAGE_KEY);
+    await storage.removeItem(HISTORY_STORAGE_KEY);
+    await storage.removeItem(FAVORITES_STORAGE_KEY);
   } catch (error) {
     console.error('Erro ao limpar histórico:', error);
     throw error;
@@ -137,7 +137,7 @@ export const clearHistory = async (): Promise<void> => {
 // Adicionar/remover dos favoritos
 export const toggleFavorite = async (id: string): Promise<boolean> => {
   try {
-    const favoritesJson = await AsyncStorage.getItem(FAVORITES_STORAGE_KEY);
+    const favoritesJson = await storage.getItem(FAVORITES_STORAGE_KEY);
     let favorites: string[] = favoritesJson ? JSON.parse(favoritesJson) : [];
     
     if (favorites.includes(id)) {
@@ -146,7 +146,7 @@ export const toggleFavorite = async (id: string): Promise<boolean> => {
       favorites.push(id);
     }
     
-    await AsyncStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
+    await storage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
     return favorites.includes(id); // Retorna se está favoritado
   } catch (error) {
     console.error('Erro ao alternar favorito:', error);
@@ -157,7 +157,7 @@ export const toggleFavorite = async (id: string): Promise<boolean> => {
 // Verificar se está favoritado
 export const isFavorite = async (id: string): Promise<boolean> => {
   try {
-    const favoritesJson = await AsyncStorage.getItem(FAVORITES_STORAGE_KEY);
+    const favoritesJson = await storage.getItem(FAVORITES_STORAGE_KEY);
     const favorites: string[] = favoritesJson ? JSON.parse(favoritesJson) : [];
     return favorites.includes(id);
   } catch (error) {
@@ -171,7 +171,7 @@ export const getFavorites = async (): Promise<HistoryItem[]> => {
   try {
     const [history, favoritesJson] = await Promise.all([
       getHistory(),
-      AsyncStorage.getItem(FAVORITES_STORAGE_KEY),
+      storage.getItem(FAVORITES_STORAGE_KEY),
     ]);
     
     const favorites: string[] = favoritesJson ? JSON.parse(favoritesJson) : [];
@@ -185,11 +185,11 @@ export const getFavorites = async (): Promise<HistoryItem[]> => {
 // Remover dos favoritos
 export const removeFromFavorites = async (id: string): Promise<void> => {
   try {
-    const favoritesJson = await AsyncStorage.getItem(FAVORITES_STORAGE_KEY);
+    const favoritesJson = await storage.getItem(FAVORITES_STORAGE_KEY);
     let favorites: string[] = favoritesJson ? JSON.parse(favoritesJson) : [];
     
     favorites = favorites.filter(favId => favId !== id);
-    await AsyncStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
+    await storage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
   } catch (error) {
     console.error('Erro ao remover dos favoritos:', error);
   }
