@@ -1,4 +1,4 @@
-// src/services/index.ts
+// src/services/detection/index.ts
 export { ImagePreprocessor } from './ImagePreprocessor';
 export { AnalysisOrchestrator } from './AnalysisOrchestrator';
 export { ResultCombiner } from './ResultCombiner';
