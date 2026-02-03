@@ -40,19 +40,18 @@ export class ErrorHandler {
     }
 
     throw new Error(
-      'Não foi possível identificar a planta. ' +
-      'Tente novamente com uma imagem mais clara.'
+      this.getErrorMessage(error)
     );
   }
 
   getErrorMessage(error: any): string {
     if (error.response?.status === 401) {
-      return 'Erro. Contacte o suporte.';
+      return 'Ocorreu um erro inesperado. Contacte o suporte.';
     }
     if (error.response?.status === 403) {
       return 'Limite de requisições excedido. Tente amanhã.';
     }
-    if (error.message?.includes('network')) {
+    if (error.message?.includes('network') || error.message?.includes('conexão')) {
       return 'Sem conexão à internet. Verifique sua rede.';
     }
     return 'Ocorreu um erro inesperado. Tente novamente.';

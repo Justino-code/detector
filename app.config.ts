@@ -47,4 +47,5 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         projectId: '6a655d67-54fb-4732-b2b5-d9eebaf2f1db'
       }
   },
+  jsEngine: 'hermes',
 });

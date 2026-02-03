@@ -29,6 +29,10 @@ interface ThemeColors {
   borderLight: string;
   overlay: string;
   shadow: string;
+  networkOnline: string;
+  networkOffline: string;
+  networkWarning: string;
+  disabled: string;
 }
 
 interface ThemeSpacing {
@@ -104,6 +108,12 @@ const lightTheme: AppTheme = {
     
     overlay: 'rgba(45, 52, 54, 0.5)',
     shadow: 'rgba(99, 110, 114, 0.15)',
+
+    networkOnline: '#4CAF50',
+    networkOffline: '#F44336',
+    networkWarning: '#FF9800',
+
+    disabled: '#E0E0E0',
   },
   
   spacing: {
@@ -166,6 +176,12 @@ const darkTheme: AppTheme = {
     
     overlay: 'rgba(0, 0, 0, 0.7)',
     shadow: 'rgba(0, 0, 0, 0.3)',
+
+    networkOnline: '#388E3C',
+    networkOffline: '#D32F2F',
+    networkWarning: '#F57C00',
+
+    disabled: '#424242',
   },
   
   spacing: lightTheme.spacing,

@@ -1,11 +1,15 @@
 // src/main.tsx
 import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { NavigationContainer } from '@react-navigation/native';
 import MainTabNavigator from './navigation/MainTabNavigator';
-import CustomSplash from './components/splash/SplashScreen';
+import SplashScreen from './components/splash/SplashScreen';
+import NetworkStatusBar from './components/network/NetworkStatusBar';
+
+// Importar o serviço de rede
+import { networkService } from './services/network';
 
 // Componente principal
 const AppContent = () => {
@@ -13,11 +17,17 @@ const AppContent = () => {
   const [showSplash, setShowSplash] = React.useState(true);
 
   useEffect(() => {
+    // Inicializa o serviço de rede
+    networkService.initialize();
+
     const timer = setTimeout(() => {
       setShowSplash(false);
     }, 2000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      networkService.cleanup();
+    };
   }, []);
 
   // Para o splash screen
@@ -25,13 +35,13 @@ const AppContent = () => {
     return (
       <SafeAreaView style={{ 
         flex: 1, 
-        backgroundColor: '#F8F9FA' // Cor de fundo do splash
+        backgroundColor: '#F8F9FA'
       }}>
         <StatusBar 
           backgroundColor="#F8F9FA"
           barStyle="dark-content"
         />
-        <CustomSplash />
+        <SplashScreen />
       </SafeAreaView>
     );
   }
@@ -46,6 +56,10 @@ const AppContent = () => {
         backgroundColor={currentTheme.colors.background}
         barStyle={isDark ? "light-content" : "dark-content"}
       />
+      
+      {/* NetworkStatusBar dentro do SafeAreaView */}
+      <NetworkStatusBar />
+      
       <NavigationContainer>
         <MainTabNavigator />
       </NavigationContainer>
@@ -56,8 +70,10 @@ const AppContent = () => {
 // Container principal
 export default function AppContainer() {
   return (
-    <ThemeProvider>
-      <AppContent />
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <AppContent />
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }

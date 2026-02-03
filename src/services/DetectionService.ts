@@ -27,6 +27,10 @@ class DetectionService {
     console.log(`Pré-processamento ${enabled ? 'ativado' : 'desativado'}`);
   }
 
+  static getSimulationMode(): boolean{
+    return this.withSimulate;
+  }
+
   // Método principal de análise completa
   static async completeAnalysis(
     imageUri: string, 
@@ -81,3 +85,4 @@ class DetectionService {
 
 export default DetectionService;
 export const detectionService = new DetectionService();
+export const withSimulate = DetectionService.getSimulationMode();

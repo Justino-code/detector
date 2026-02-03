@@ -1,11 +1,5 @@
-import { MMKVStorage } from './MmkvStorage';
-import { AsyncStorageAdapter } from './AsyncStorageAdapter';
+export *  from "./adapter";
 
-// escolha centralizada
-const USE_MMKV = true;
+export { StorageFactory } from "./StorageFactory";
 
-export const storage = USE_MMKV
-  ? new MMKVStorage()
-  : new AsyncStorageAdapter();
-
-export { MMKVStorage, AsyncStorageAdapter };
+export { storage } from "./StorageSingleton";

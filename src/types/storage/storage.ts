@@ -3,3 +3,8 @@ export interface StorageAdapter {
   getItem(key: string): Promise<string | null>;
   removeItem(key: string): Promise<void>;
 }
+
+export enum StorageType {
+  MMKV = 'mmkv',
+  ASYNC = 'async'
+}
