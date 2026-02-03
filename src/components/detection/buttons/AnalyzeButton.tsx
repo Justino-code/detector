@@ -3,7 +3,7 @@ import React from 'react';
 import Button from '../../common/buttons/Button';
 import { useTheme } from '../../../hooks/useTheme';
 import { useNetwork } from '../../../hooks/useNetwork';
-import DetectionService from '../../../services/DetectionService';
+import { useDetectionSimulation } from '../../../hooks/useDetectionSimulation';
 
 interface AnalyzeButtonProps {
   onPress: () => void;
@@ -23,45 +23,49 @@ const AnalyzeButton: React.FC<AnalyzeButtonProps> = ({
   const { currentTheme } = useTheme();
   const { isOnline } = useNetwork();
 
-  // Obtém a configuração atual do DetectionService
-  const currentSettings = DetectionService.getCurrentSettings();
-  const withSimulate = currentSettings.simulation;
+  // ✅ agora é reativo
+  const withSimulate = useDetectionSimulation();
 
   if (!hasImage || hasAnalysis) return null;
 
   // Se modo de simulação está ativo, não desabilita por falta de conexão
-  // Mas ainda pode ser desabilitado por outros motivos
   const isDisabledByNetwork = !isOnline && !withSimulate;
   const isDisabled = disabled || loading || isDisabledByNetwork;
-  
-  // Determina texto baseado no estado
-  let buttonText = 'Analisar Imagem';
-  if (loading) {
-    buttonText = 'Analisando...';
-  } else if (!isOnline) {
-    buttonText = withSimulate ? 'Simular Análise' : 'Sem Conexão';
-  }
-  
-  // Determina ícone baseado no estado
-  const iconName = !isOnline ? (withSimulate ? 'simulate' : 'wifi-off') : 'magnify';
+
+  // Texto do botão
+  const buttonText = loading
+    ? 'Analisando...'
+    : !isOnline
+    ? withSimulate
+      ? 'Simular Análise'
+      : 'Sem Conexão'
+    : 'Analisar Imagem';
+
+  // Ícone
+  const iconName = !isOnline
+    ? withSimulate
+      ? 'simulate'
+      : 'wifi-off'
+    : 'magnify';
 
   return (
     <Button
-      variant={!isOnline && withSimulate ? "secondary" : "primary"}
+      variant={!isOnline && withSimulate ? 'secondary' : 'primary'}
       title={buttonText}
       iconLeft={iconName}
       onPress={onPress}
       loading={loading}
       disabled={isDisabled}
       fullWidth
-      style={{ 
+      style={{
         marginBottom: currentTheme.spacing.md,
-        backgroundColor: isDisabled 
+        backgroundColor: isDisabled
           ? currentTheme.colors.disabled
-          : (!isOnline && withSimulate 
-              ? currentTheme.colors.secondary 
-              : (loading ? currentTheme.colors.primaryLight : currentTheme.colors.primary)
-            )
+          : !isOnline && withSimulate
+          ? currentTheme.colors.secondary
+          : loading
+          ? currentTheme.colors.primaryLight
+          : currentTheme.colors.primary,
       }}
     />
   );

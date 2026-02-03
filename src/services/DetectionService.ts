@@ -85,4 +85,3 @@ class DetectionService {
 
 export default DetectionService;
 export const detectionService = new DetectionService();
-export const withSimulate = DetectionService.getSimulationMode();
