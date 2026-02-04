@@ -2,7 +2,7 @@
 import { useCallback } from 'react';
 import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { CompleteAnalysis } from '../services/DetectionService';
+import { CompleteAnalysis } from '../types/analysis';
 import { saveToHistory, HistoryItem } from '../services/historyStorageService';
 import { useDetection } from './useDetection';
 import { 

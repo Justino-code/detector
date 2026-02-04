@@ -8,7 +8,12 @@ export function useDetection() {
   const detect = async (imageUri: string) => {
     setLoading(true);
     try {
-      return await DetectionService.completeAnalysis(imageUri);
+      const detection = await DetectionService.completeAnalysis(imageUri);
+
+      //console.log(detection);
+      
+
+      return detection;
     } finally {
       setLoading(false);
     }

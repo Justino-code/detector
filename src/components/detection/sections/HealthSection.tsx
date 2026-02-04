@@ -17,26 +17,36 @@ const HealthSection: React.FC<HealthSectionProps> = ({ analysis }) => {
   // Extrair dados da estrutura health
   const health = analysis.health;
   
-  // Usar health.isHealthy se existir, senão calcular baseado no status
-  const isHealthy = health.isHealthy !== undefined 
-    ? health.isHealthy 
-    : health.status === 'healthy';
-  
   // Usar healthScore ou score (preferência para healthScore)
   const score = health.healthScore || health.score || 0;
   
-  // Determinar status baseado no score se não houver status específico
-  const status = health.status || (score >= 80 ? 'healthy' : score >= 50 ? 'warning' : 'critical');
+  // Determinar status baseado no score - LÓGICA MELHORADA
+  const getStatusFromScore = () => {
+    if (score >= 80) return 'healthy';
+    if (score >= 50) return 'warning';
+    return 'critical';
+  };
+  
+  const status = health.status || getStatusFromScore();
+  const isHealthy = status === 'healthy';
+
+  console.log('Health data:', { 
+    score, 
+    status, 
+    isHealthy,
+    healthScore: health.healthScore,
+    originalScore: health.score 
+  });
 
   // Configurar mensagens baseadas no status
   const getHealthConfig = () => {
     switch (status) {
       case 'healthy':
         return {
-          label: 'Saudável',
+          label: score >= 90 ? 'Excelente' : score >= 80 ? 'Saudável' : 'Boa',
           message: health.diseases?.length === 0 
-            ? 'A planta parece estar em boas condições' 
-            : 'Problemas detectados mas sob controle',
+            ? 'A planta está em excelentes condições' 
+            : 'Problemas mínimos detectados',
           description: health.recommendations?.join('. ') || 'Continue com os cuidados regulares.'
         };
       case 'warning':
@@ -66,15 +76,18 @@ const HealthSection: React.FC<HealthSectionProps> = ({ analysis }) => {
 
   const healthConfig = getHealthConfig();
 
+  // Determinar cor do ícone baseado no score
+  const getIconColor = () => {
+    if (score >= 80) return currentTheme.colors.success;
+    if (score >= 50) return currentTheme.colors.warning;
+    return currentTheme.colors.error;
+  };
+
   return (
     <AnalysisResultCard
       title="Diagnóstico de Saúde"
       icon="heart-pulse"
-      iconColor={
-        status === 'healthy' ? currentTheme.colors.success : 
-        status === 'warning' ? currentTheme.colors.warning : 
-        currentTheme.colors.error
-      }
+      iconColor={getIconColor()}
     >
       <HealthScoreMeter
         score={score}
@@ -87,11 +100,7 @@ const HealthSection: React.FC<HealthSectionProps> = ({ analysis }) => {
         <View style={{ 
           marginTop: currentTheme.spacing.md, 
           padding: currentTheme.spacing.sm,
-          backgroundColor: status === 'healthy' 
-            ? `${currentTheme.colors.success}15` 
-            : status === 'warning' 
-              ? `${currentTheme.colors.warning}15` 
-              : `${currentTheme.colors.error}15`,
+          backgroundColor: getIconColor() + '15', // Cor com transparência
           borderRadius: currentTheme.borderRadius.sm,
         }}>
           <Typography variant="body2" style={{ 

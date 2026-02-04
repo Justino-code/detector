@@ -36,12 +36,12 @@ const HistoryFilters: React.FC<HistoryFiltersProps> = ({
   }));
 
   const filters = [
-  { id: 'all', label: 'Todas', icon: 'format-list-bulleted' },
-  { id: 'healthy', label: 'Saudáveis', icon: 'check-circle' },
-  { id: 'unhealthy', label: 'Com Problemas', icon: 'alert-circle' },
-  { id: 'favorites', label: 'Favoritas', icon: 'star' },
-  { id: 'recent', label: 'Recentes', icon: 'clock' },
-] as const;
+    { id: 'all' as FilterType, label: 'Todas', icon: 'format-list-bulleted' },
+    { id: 'healthy' as FilterType, label: 'Saudáveis', icon: 'check-circle' },
+    { id: 'unhealthy' as FilterType, label: 'Com Problemas', icon: 'alert-circle' },
+    //{ id: 'favorites' as FilterType, label: 'Favoritas', icon: 'star' },
+    { id: 'recent' as FilterType, label: 'Recentes', icon: 'clock' },
+  ];
 
   return (
     <View style={styles.container}>

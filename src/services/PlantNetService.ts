@@ -76,7 +76,7 @@ API_CONFIG.KINDUISE.API_KEY);
         }
       );
 
-      console.log('✅ Resposta PlantNet:', JSON.stringify(response.data, null, 2));
+      //console.log('✅ Resposta PlantNet:', JSON.stringify(response.data, null, 2));
       
       if (!response.data.results || response.data.results.length === 0) {
         throw new Error('Nenhuma planta identificada na imagem');

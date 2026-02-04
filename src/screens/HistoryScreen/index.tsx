@@ -6,9 +6,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-
 import { useTheme } from '../../hooks/useTheme';
 import ScreenContainer from '../../components/common/layout/ScreenContainer';
 import HistoryList, { FilterType } from '../../components/history/HistoryList';
@@ -20,6 +18,7 @@ import {
   getHistoryStats,
   HistoryItem,
   deleteFromHistory,
+  getFavorites, // Certifique-se que esta função existe
 } from '../../services/historyStorageService';
 
 const HistoryScreen = ({ navigation, route }: any) => {
@@ -33,6 +32,7 @@ const HistoryScreen = ({ navigation, route }: any) => {
     healthy: 0,
     unhealthy: 0,
   });
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]); // Estado para IDs dos favoritos
 
   const { currentTheme, makeStyles } = useTheme();
   const styles = makeStyles((theme) => ({
@@ -90,16 +90,25 @@ const HistoryScreen = ({ navigation, route }: any) => {
     },
   }));
 
-  // Carregar histórico
+  // Carregar histórico E favoritos
   const loadHistory = useCallback(async () => {
     try {
-      const [history, historyStats] = await Promise.all([
+      const [history, historyStats, favorites] = await Promise.all([
         getHistory(),
         getHistoryStats(),
+        getFavorites(), // Carregar favoritos
       ]);
+
+      console.log(historyStats);
+      
       
       setHistoryItems(history);
-      setFilteredItems(history);
+      setFavoriteIds(favorites);
+      
+      // Aplicar filtro atual com os favoritos carregados
+      const filtered = await filterItems(activeFilter, history, favorites);
+      setFilteredItems(filtered);
+      
       setStats({
         total: historyStats.total,
         healthy: historyStats.healthy,
@@ -112,11 +121,20 @@ const HistoryScreen = ({ navigation, route }: any) => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [activeFilter]);
 
-  // Filtrar itens
-  const filterItems = useCallback((filter: FilterType, items: HistoryItem[]) => {
+  // Filtrar itens (agora recebe favoriteIds como parâmetro)
+  const filterItems = useCallback(async (
+    filter: FilterType, 
+    items: HistoryItem[], 
+    favIds: string[]
+  ): Promise<HistoryItem[]> => {
     let filtered = [...items];
+    
+    // Ordenar sempre por data mais recente primeiro
+    filtered = [...filtered].sort((a, b) => 
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
     
     switch (filter) {
       case 'healthy':
@@ -125,21 +143,15 @@ const HistoryScreen = ({ navigation, route }: any) => {
       case 'unhealthy':
         filtered = filtered.filter(item => !item.analysis.health.isHealthy);
         break;
-      case 'recent':
-        filtered = [...filtered].sort((a, b) => 
-          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-        );
-        break;
       case 'favorites':
-        // Implementar lógica para favoritos
-        // Por enquanto, retorna todos
+        filtered = filtered.filter(item => favIds.includes(item.id));
+        break;
+      case 'recent':
+        // Já está ordenado por data mais recente
         break;
       case 'all':
       default:
-        // Ordenar por data mais recente primeiro
-        filtered = [...filtered].sort((a, b) => 
-          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-        );
+        // Mantém todos ordenados por data
         break;
     }
     
@@ -147,11 +159,11 @@ const HistoryScreen = ({ navigation, route }: any) => {
   }, []);
 
   // Handler para mudança de filtro
-  const handleFilterChange = useCallback((filter: FilterType) => {
+  const handleFilterChange = useCallback(async (filter: FilterType) => {
     setActiveFilter(filter);
-    const filtered = filterItems(filter, historyItems);
+    const filtered = await filterItems(filter, historyItems, favoriteIds);
     setFilteredItems(filtered);
-  }, [historyItems, filterItems]);
+  }, [historyItems, favoriteIds, filterItems]);
 
   // Handler para refresh
   const handleRefresh = useCallback(() => {
@@ -201,7 +213,7 @@ const HistoryScreen = ({ navigation, route }: any) => {
     try {
       const success = await deleteFromHistory(id);
       if (success) {
-        await loadHistory(); // Recarregar histórico
+        await loadHistory();
         Alert.alert('Sucesso', 'Análise removida do histórico.');
       }
     } catch (error) {
@@ -209,28 +221,42 @@ const HistoryScreen = ({ navigation, route }: any) => {
     }
   }, [loadHistory]);
 
-  // Handler para toggle de favorito
-  const handleFavoriteToggle = useCallback((id: string, isFavorite: boolean) => {
-    // Atualizar item localmente se necessário
-    const updatedItems = historyItems.map(item => {
-      if (item.id === id) {
-        // Pode adicionar flag de favorito no item se quiser
-      }
-      return item;
-    });
-    setHistoryItems(updatedItems);
-  }, [historyItems]);
+  // Handler para toggle de favorito - ATUALIZADO
+  const handleFavoriteToggle = useCallback(async (id: string, isFavorite: boolean) => {
+    // Atualizar lista de favoritos localmente
+    let updatedFavorites: string[];
+    
+    if (isFavorite) {
+      // Adicionar aos favoritos
+      updatedFavorites = [...favoriteIds, id];
+    } else {
+      // Remover dos favoritos
+      updatedFavorites = favoriteIds.filter(favId => favId !== id);
+    }
+    
+    setFavoriteIds(updatedFavorites);
+    
+    // Se estiver no filtro de favoritos, atualizar a lista filtrada
+    if (activeFilter === 'favorites') {
+      const filtered = await filterItems('favorites', historyItems, updatedFavorites);
+      setFilteredItems(filtered);
+    }
+  }, [favoriteIds, activeFilter, historyItems, filterItems]);
 
   // Carregar histórico inicial
   useEffect(() => {
     loadHistory();
   }, [loadHistory]);
 
-  // Atualizar filtros quando histórico mudar
+  // Atualizar filtros quando histórico ou favoritos mudarem
   useEffect(() => {
-    const filtered = filterItems(activeFilter, historyItems);
-    setFilteredItems(filtered);
-  }, [historyItems, activeFilter, filterItems]);
+    const updateFilteredItems = async () => {
+      const filtered = await filterItems(activeFilter, historyItems, favoriteIds);
+      setFilteredItems(filtered);
+    };
+    
+    updateFilteredItems();
+  }, [historyItems, activeFilter, favoriteIds, filterItems]);
 
   // Verificar se tem parâmetros de atualização
   useEffect(() => {
@@ -239,7 +265,16 @@ const HistoryScreen = ({ navigation, route }: any) => {
     }
   }, [route.params?.refresh, loadHistory]);
 
-  if (loading) {
+  // Recarregar quando a tela ganhar foco
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadHistory();
+    });
+
+    return unsubscribe;
+  }, [navigation, loadHistory]);
+
+  if (loading && !refreshing) {
     return (
       <ScreenContainer
         headerTitle="Histórico"

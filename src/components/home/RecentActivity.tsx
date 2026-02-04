@@ -1,7 +1,7 @@
 // src/components/home/RecentActivity.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../hooks/useTheme';
 import Button from '../common/buttons/Button';
@@ -9,8 +9,6 @@ import Typography from '../common/typography/Typography';
 import Card from '../common/cards/Card';
 import Chip from '../common/chips/Chip';
 import { getRecentAnalyses } from '../../services/historyStorageService';
-import { CommonActions } from '@react-navigation/native';
-
 
 interface RecentActivityProps {
   onViewMore: () => void;
@@ -66,11 +64,12 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ onViewMore }) => {
       borderRadius: theme.borderRadius.medium,
       borderWidth: 1,
       borderColor: theme.colors.outlineVariant,
+      marginBottom: theme.spacing.xs, // ESPAÇAMENTO ENTRE CARDS
     },
     activityRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      alignItems: 'center',
+      alignItems: 'flex-start', // ALTERADO: flex-start para alinhar topo
       marginBottom: theme.spacing.xs,
     },
     plantInfo: {
@@ -81,42 +80,42 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ onViewMore }) => {
       color: theme.colors.text,
       fontWeight: '600',
       fontSize: 15,
+      marginBottom: 2,
     },
     activityTime: {
       color: theme.colors.textSecondary,
       fontSize: 12,
-      marginTop: 2,
     },
     healthScore: (isHealthy: boolean) => ({
       color: isHealthy ? theme.colors.success : theme.colors.warning,
       fontWeight: '700',
       fontSize: 16,
+      marginBottom: 4,
     }),
     loadingContainer: {
       alignItems: 'center',
       padding: theme.spacing.md,
     },
+    statusContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: theme.spacing.xs,
+    },
+    diseaseIndicator: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
   }));
 
-  useEffect(() => {
-    loadRecentActivities();
-  }, []);
-
-  const loadRecentActivities = async () => {
+  // Função para carregar atividades
+  const loadRecentActivities = useCallback(async () => {
     try {
       setLoading(true);
       const analyses = await getRecentAnalyses(3);
       
-      console.log('Analyses loaded from storage:', analyses.length);
-      
-      const activities: ActivityItem[] = analyses.map((analysis, index) => {
-        console.log(`Analysis ${index}:`, {
-          id: analysis.id,
-          hasImageUri: !!analysis.imageUri,
-          hasAnalysis: !!analysis.analysis,
-          hasIdentification: !!analysis.analysis?.identification,
-        });
-
+      const activities: ActivityItem[] = analyses.map((analysis) => {
         const plantName = getPlantName(analysis);
         const healthScore = getHealthScore(analysis);
         const isHealthy = getIsHealthy(analysis);
@@ -139,7 +138,19 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ onViewMore }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Carregar inicialmente
+  useEffect(() => {
+    loadRecentActivities();
+  }, [loadRecentActivities]);
+
+  // Recarregar quando a tela ganhar foco
+  useFocusEffect(
+    useCallback(() => {
+      loadRecentActivities();
+    }, [loadRecentActivities])
+  );
 
   const getPlantName = (analysis: any) => {
     if (!analysis?.analysis?.identification) return 'Planta não identificada';
@@ -168,7 +179,9 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ onViewMore }) => {
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
 
-    if (diffMins < 60) {
+    if (diffMins < 1) {
+      return 'Agora mesmo';
+    } else if (diffMins < 60) {
       return `${diffMins} min atrás`;
     } else if (diffHours < 24) {
       return `${diffHours}h atrás`;
@@ -179,43 +192,17 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ onViewMore }) => {
     }
   };
 
-const handleActivityPress = (activity: ActivityItem) => {
-  console.log('Activity pressed:', {
-    id: activity.id,
-    hasAnalysisData: !!activity.analysisData,
-  });
+  const handleActivityPress = (activity: ActivityItem) => {
+    if (!activity.analysisData || !activity.analysisData.analysis) {
+      Alert.alert('Erro', 'Dados da análise estão incompletos.');
+      return;
+    }
 
-  if (!activity.analysisData || !activity.analysisData.analysis) {
-    console.error('Dados da análise incompletos:', activity.analysisData);
-    Alert.alert('Erro', 'Dados da análise estão incompletos.');
-    return;
-  }
-
-  // Navegação em múltiplos passos
-  navigation.dispatch(
-    CommonActions.reset({
-      index: 1,
-      routes: [
-        { name: 'Home' },
-        { 
-          name: 'History',
-          state: {
-            routes: [
-              { name: 'HistoryList' },
-              { 
-                name: 'AnalysisDetail',
-                params: {
-                  analysisId: activity.id,
-                  analysisData: activity.analysisData,
-                }
-              }
-            ]
-          }
-        },
-      ],
-    })
-  );
-};
+    navigation.navigate('AnalysisDetail', {
+      analysisId: activity.id,
+      analysisData: activity.analysisData,
+    });
+  };
 
   const handleStartAnalysis = () => {
     navigation.navigate('Detection');
@@ -226,7 +213,7 @@ const handleActivityPress = (activity: ActivityItem) => {
       <View style={styles.container}>
         <View style={styles.activityHeader}>
           <Typography variant="h4" style={styles.activityTitle}>
-            📅 Atividade Recente
+            📅 Actividades Recentes
           </Typography>
         </View>
         <View style={styles.loadingContainer}>
@@ -243,93 +230,91 @@ const handleActivityPress = (activity: ActivityItem) => {
     <View style={styles.container}>
       <View style={styles.activityHeader}>
         <Typography variant="h4" style={styles.activityTitle}>
-          📅 Atividade Recente
+          📅 Actividades Recentes
         </Typography>
-        <Button
-          variant="text"
-          title="Ver mais"
-          onPress={onViewMore}
-        />
+        {recentActivities.length > 0 && (
+          <Button
+            variant="text"
+            title="Ver mais"
+            onPress={onViewMore}
+            size="small"
+          />
+        )}
       </View>
 
       {recentActivities.length > 0 ? (
         <View style={styles.activitiesList}>
-          <ScrollView 
-            showsVerticalScrollIndicator={false}
-            style={{ maxHeight: 200 }}
-          >
-            {recentActivities.map((activity) => (
-              <TouchableOpacity 
-                key={activity.id}
-                onPress={() => handleActivityPress(activity)}
-                activeOpacity={0.7}
+          {recentActivities.map((activity) => (
+            <TouchableOpacity 
+              key={activity.id}
+              onPress={() => handleActivityPress(activity)}
+              activeOpacity={0.7}
+            >
+              <Card
+                variant="filled"
+                padding="small"
+                borderRadius="medium"
+                style={styles.activityCard}
               >
-                <Card
-                  variant="filled"
-                  padding="small"
-                  borderRadius="medium"
-                  style={styles.activityCard}
-                >
-                  <View style={styles.activityRow}>
-                    <View style={styles.plantInfo}>
-                      <Typography 
-                        variant="body1" 
-                        numberOfLines={1}
-                        style={styles.plantName}
-                      >
-                        {activity.plantName}
-                      </Typography>
-                      <Typography variant="caption" style={styles.activityTime}>
-                        {formatTime(activity.timestamp)}
-                      </Typography>
-                    </View>
-                    
-                    <View style={{ alignItems: 'flex-end' }}>
-                      <Typography variant="body1" style={styles.healthScore(activity.isHealthy)}>
-                        {activity.healthScore}/100
-                      </Typography>
-                      <Chip
-                        label={activity.isHealthy ? 'Saudável' : 'Atenção'}
-                        icon={activity.isHealthy ? 'check-circle' : 'alert-circle'}
-                        variant="filled"
-                        size="small"
-                        style={{
-                          backgroundColor: activity.isHealthy 
-                            ? `${currentTheme.colors.success}15` 
-                            : `${currentTheme.colors.warning}15`,
-                          marginTop: 4,
-                          paddingHorizontal: 6,
-                        }}
-                        textStyle={{
-                          color: activity.isHealthy 
-                            ? currentTheme.colors.success 
-                            : currentTheme.colors.warning,
-                          fontSize: 10,
-                        }}
-                      />
-                    </View>
+                <View style={styles.activityRow}>
+                  <View style={styles.plantInfo}>
+                    <Typography 
+                      variant="body1" 
+                      numberOfLines={1}
+                      style={styles.plantName}
+                    >
+                      {activity.plantName}
+                    </Typography>
+                    <Typography variant="caption" style={styles.activityTime}>
+                      {formatTime(activity.timestamp)}
+                    </Typography>
                   </View>
                   
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Typography variant="body1" style={styles.healthScore(activity.isHealthy)}>
+                      {activity.healthScore}/100
+                    </Typography>
+                    <Chip
+                      label={activity.isHealthy ? 'Saudável' : 'Atenção'}
+                      icon={activity.isHealthy ? 'check-circle' : 'alert-circle'}
+                      variant="filled"
+                      size="small"
+                      style={{
+                        backgroundColor: activity.isHealthy 
+                          ? `${currentTheme.colors.success}15` 
+                          : `${currentTheme.colors.warning}15`,
+                      }}
+                      textStyle={{
+                        color: activity.isHealthy 
+                          ? currentTheme.colors.success 
+                          : currentTheme.colors.warning,
+                        fontSize: 10,
+                      }}
+                    />
+                  </View>
+                </View>
+                
+                <View style={styles.statusContainer}>
                   {activity.hasDiseases && (
-                    <View style={{ 
-                      flexDirection: 'row', 
-                      alignItems: 'center', 
-                      marginTop: 4,
-                      gap: 4,
-                    }}>
+                    <View style={styles.diseaseIndicator}>
                       <Icon name="alert" size={12} color={currentTheme.colors.error} />
                       <Typography variant="caption" style={{ 
                         color: currentTheme.colors.error,
                         fontSize: 11,
                       }}>
-                        Possui problemas identificados
+                        Problemas identificados
                       </Typography>
                     </View>
                   )}
-                </Card>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+                  <Icon 
+                    name="chevron-right" 
+                    size={16} 
+                    color={currentTheme.colors.textSecondary} 
+                  />
+                </View>
+              </Card>
+            </TouchableOpacity>
+          ))}
         </View>
       ) : (
         <View style={styles.noActivity}>

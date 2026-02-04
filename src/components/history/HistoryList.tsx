@@ -11,6 +11,7 @@ import HistoryCard from './HistoryCard';
 import EmptyHistory from './EmptyHistory';
 import HistoryFilters, { FilterType } from './filters/HistoryFilters';
 import { HistoryItem } from '../../services/historyStorageService';
+import Typography from '../common/typography/Typography';
 
 interface HistoryListProps {
   items: HistoryItem[];
@@ -48,9 +49,19 @@ const HistoryList: React.FC<HistoryListProps> = ({
       paddingHorizontal: theme.spacing.md,
       paddingTop: theme.spacing.md,
     },
+    emptyFilterContainer: {
+      alignItems: 'center',
+      padding: 40,
+      justifyContent: 'center',
+    },
+    emptyFilterText: {
+      color: theme.colors.textSecondary,
+      textAlign: 'center',
+      marginTop: theme.spacing.md,
+    },
   }));
 
-  if (items.length === 0) {
+  if (items.length === 0 && activeFilter === 'all') {
     return <EmptyHistory onStartDetection={onStartDetection} />;
   }
 
@@ -76,6 +87,13 @@ const HistoryList: React.FC<HistoryListProps> = ({
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
         refreshControl={refreshControl}
+        ListEmptyComponent={
+          <View style={styles.emptyFilterContainer}>
+            <Typography variant="body1" style={styles.emptyFilterText}>
+              Nenhum resultado encontrado para este filtro.
+            </Typography>
+          </View>
+        }
       />
     </View>
   );

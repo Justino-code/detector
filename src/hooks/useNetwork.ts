@@ -5,7 +5,7 @@ import { networkService } from '../services/network';
  * Hook para monitorar o estado da rede
  * @returns {Object} Estado da rede e métodos úteis
  */
-export const useNetwork = () => {
+export const useNetwork = (): object => {
   const [networkState, setNetworkState] = useState({
     isConnected: false,
     isInternetReachable: false,

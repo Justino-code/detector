@@ -46,7 +46,7 @@ class PlantNetDiseaseService {
       
       // Usar FormData
       const formData = new FormData();
-      formData.append('organs', 'leaf');
+      formData.append('organs', 'auto');
       formData.append('images', {
         uri: imageUri,
         type: 'image/jpeg',
@@ -66,6 +66,7 @@ class PlantNetDiseaseService {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
+          params: API_CONFIG.PLANTNET.getDiseaseParams(),
           timeout: 30000,
         }
       );

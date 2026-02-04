@@ -22,6 +22,24 @@ const HealthScoreMeter: React.FC<HealthScoreMeterProps> = ({
   message,
 }) => {
   const { currentTheme, makeStyles } = useTheme();
+  
+  // FUNÇÃO PARA DETERMINAR A COR BASEADA NO SCORE
+  const getScoreColor = () => {
+    if (score >= 80) {
+      return currentTheme.colors.success; // Verde para score alto
+    } else if (score >= 50) {
+      return currentTheme.colors.warning; // Amarelo para score médio
+    } else {
+      return currentTheme.colors.error; // Vermelho para score baixo
+    }
+  };
+
+  const getIconName = () => {
+    if (score >= 80) return 'check-circle';
+    if (score >= 50) return 'alert-circle';
+    return 'close-circle';
+  };
+
   const styles = makeStyles((theme) => ({
     container: {
       backgroundColor: theme.colors.surfaceVariant,
@@ -38,7 +56,7 @@ const HealthScoreMeter: React.FC<HealthScoreMeterProps> = ({
       marginLeft: theme.spacing.sm,
     },
     healthLabel: {
-      color: isHealthy ? theme.colors.success : theme.colors.warning,
+      // Usar função para determinar cor
       marginBottom: 2,
     },
     healthMessage: {
@@ -52,7 +70,7 @@ const HealthScoreMeter: React.FC<HealthScoreMeterProps> = ({
       marginBottom: 2,
     },
     scoreValue: {
-      color: theme.colors.text,
+      color: getScoreColor(), // Usar cor baseada no score
     },
     scoreTotal: {
       color: theme.colors.textSecondary,
@@ -70,7 +88,7 @@ const HealthScoreMeter: React.FC<HealthScoreMeterProps> = ({
     healthBarFill: {
       height: '100%',
       borderRadius: 4,
-      backgroundColor: isHealthy ? currentTheme.colors.success : currentTheme.colors.warning,
+      // Usar função para determinar cor
     },
     healthBarLabel: {
       textAlign: 'center',
@@ -79,21 +97,26 @@ const HealthScoreMeter: React.FC<HealthScoreMeterProps> = ({
   }));
 
   const getHealthLevel = () => {
+    if (score >= 80) return 'Excelente';
     if (score >= 70) return 'Boa';
-    if (score >= 40) return 'Moderada';
-    return 'Baixa';
+    if (score >= 50) return 'Moderada';
+    if (score >= 30) return 'Baixa';
+    return 'Crítica';
   };
+
+  const scoreColor = getScoreColor();
+  const iconName = getIconName();
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Icon
-          name={isHealthy ? 'check-circle' : 'alert-circle'}
+          name={iconName}
           size={32}
-          color={isHealthy ? currentTheme.colors.success : currentTheme.colors.warning}
+          color={scoreColor}
         />
         <View style={styles.healthTextContainer}>
-          <Typography variant="h4" style={styles.healthLabel}>
+          <Typography variant="h4" style={[styles.healthLabel, { color: scoreColor }]}>
             {label}
           </Typography>
           <Typography variant="body2" style={styles.healthMessage}>
@@ -118,7 +141,10 @@ const HealthScoreMeter: React.FC<HealthScoreMeterProps> = ({
           <View 
             style={[
               styles.healthBarFill,
-              { width: `${score}%` }
+              { 
+                width: `${score}%`,
+                backgroundColor: scoreColor
+              }
             ]} 
           />
         </View>

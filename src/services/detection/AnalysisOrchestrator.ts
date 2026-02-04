@@ -4,6 +4,7 @@ import PlantNetDiseaseService from '../PlantNetDiseasesService';
 import { ResultCombiner } from './ResultCombiner';
 import { MockAnalysisService } from './MockAnalysisService';
 import { CompleteAnalysis, PlantIdentification } from '../../types/analysis';
+import { networkService } from '../network';
 
 export class AnalysisOrchestrator {
   private resultCombiner: ResultCombiner;
@@ -14,6 +15,10 @@ export class AnalysisOrchestrator {
     this.mockService = new MockAnalysisService();
   }
 
+  private async isOffline(): Promise<boolean>{
+    return await networkService.isOffline();
+  }
+
   async orchestrateAnalysis(
     imageUri: string,
     location?: any,
@@ -22,7 +27,7 @@ export class AnalysisOrchestrator {
     console.log('🔗 Orquestrando análise...');
 
     // Se simulação permitida, retorna dados mockados
-    if (allowSimulation) {
+    if (allowSimulation && (await this.isOffline())) {
       console.log('🔄 Usando análise simulada');
       return this.mockService.simulateCompleteAnalysis(imageUri, location);
     }
@@ -46,7 +51,7 @@ export class AnalysisOrchestrator {
     imageUri: string,
     allowSimulation: boolean = false
   ): Promise<PlantIdentification> {
-    if (allowSimulation) {
+    if (allowSimulation && (await this.isOffline())) {
       return this.mockService.simulateQuickAnalysis();
     }
 

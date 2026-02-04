@@ -18,9 +18,10 @@ interface HistoryCardProps {
   item: HistoryItem;
   onPress: () => void;
   onFavoriteToggle?: (id: string, isFavorite: boolean) => void;
+  forceRefresh?: () => void; // ADICIONAR ESTA PROP
 }
 
-const HistoryCard: React.FC<HistoryCardProps> = ({ item, onPress, onFavoriteToggle }) => {
+const HistoryCard: React.FC<HistoryCardProps> = ({ item, onPress, onFavoriteToggle, forceRefresh }) => {
   const { currentTheme, makeStyles } = useTheme();
   const [isFavorited, setIsFavorited] = useState(false);
   
@@ -101,6 +102,11 @@ const HistoryCard: React.FC<HistoryCardProps> = ({ item, onPress, onFavoriteTogg
       
       if (onFavoriteToggle) {
         onFavoriteToggle(item.id, newFavoriteStatus);
+      }
+      
+      // FORÇAR ATUALIZAÇÃO IMEDIATA
+      if (forceRefresh) {
+        forceRefresh();
       }
     } catch (error) {
       console.error('Erro ao favoritar:', error);
