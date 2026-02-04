@@ -1,7 +1,7 @@
 // src/components/home/RecentActivity.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, CommonActions } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../hooks/useTheme';
 import Button from '../common/buttons/Button';
@@ -64,12 +64,12 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ onViewMore }) => {
       borderRadius: theme.borderRadius.medium,
       borderWidth: 1,
       borderColor: theme.colors.outlineVariant,
-      marginBottom: theme.spacing.xs, // ESPAÇAMENTO ENTRE CARDS
+      marginBottom: theme.spacing.xs,
     },
     activityRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      alignItems: 'flex-start', // ALTERADO: flex-start para alinhar topo
+      alignItems: 'flex-start',
       marginBottom: theme.spacing.xs,
     },
     plantInfo: {
@@ -198,10 +198,30 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ onViewMore }) => {
       return;
     }
 
-    navigation.navigate('AnalysisDetail', {
-      analysisId: activity.id,
-      analysisData: activity.analysisData,
-    });
+    // Navegação em múltiplos passos
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 1,
+        routes: [
+          { name: 'Home' },
+          { 
+            name: 'History',
+            state: {
+              routes: [
+                { name: 'HistoryList' },
+                { 
+                  name: 'AnalysisDetail',
+                  params: {
+                    analysisId: activity.id,
+                    analysisData: activity.analysisData,
+                  }
+                }
+              ]
+            }
+          },
+        ],
+      })
+    );
   };
 
   const handleStartAnalysis = () => {
